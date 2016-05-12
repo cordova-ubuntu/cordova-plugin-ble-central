@@ -77,7 +77,7 @@
           <feature name="BluetoothBle">
             <param policy_group="bluetooth" policy_version="1.3" />
             <deps>
-              <deb>["libqtconnectivity-dev:armhf:ARCH"]</deb>
+              <deb>["libconnectivity-qt1-dev:ARCH"]</deb>
             </deps>
           </feature>
         </config-file>
