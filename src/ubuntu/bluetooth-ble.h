@@ -21,6 +21,9 @@
 #ifndef BLUETOOTH_BLE_H
 #define BLUETOOTH_BLE_H
 
+#include <QVariant>
+#include <QString>
+
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothDeviceInfo>
 #include <QLowEnergyController>
@@ -28,33 +31,33 @@
 
 #include <cplugin.h>
 
-class BluetoothBlePlugin: public CPlugin {
+class BleCentral: public CPlugin {
     Q_OBJECT
 
 public:
-    explicit BluetoothBlePlugin(Cordova *cordova);
+    explicit BleCentral(Cordova *cordova);
 
     virtual const QString fullName() override {
-        return BluetoothBlePlugin::fullID();
+        return BleCentral::fullID();
     }
 
     virtual const QString shortName() override {
-        return "BluetoothBle";
+        return "BLECentral";
     }
 
     static const QString fullID() {
-        return "BluetoothBle";
+        return "BLECentral";
     }
 
 public slots:
 
     void scan(int scId, int ecId,
-              const QVariantArray& services,
+              const QVariantList& services,
               int seconds);
     void startScan(int scId, int ecId,
-                   const QVariantArray& services);
+                   const QVariantList& services);
     void startScanWithOptions(int scId, int ecId,
-                              const QVariantArray& services,
+                              const QVariantList& services,
                               const QVariantMap& options);
     void stopScan(int scId, int ecId);
 
@@ -87,9 +90,9 @@ public slots:
                           , const QString& serviceUuid
                           , const QString& characteristicUuid);
 
-    void isEnabled(int scId, int ecId
-                   , const QString& deviceId);
-    void isConnected(int scId, int ecId);
+    void isEnabled(int scId, int ecId);
+    void isConnected(int scId, int ecId
+                     , const QString& deviceId);
 
     void startStateNotifications(int scId, int ecId);
     void stopStateNotifications(int scId, int ecId);
@@ -102,11 +105,20 @@ private slots:
     void deviceDiscovered(const QBluetoothDeviceInfo&);
     void deviceScanError(QBluetoothDeviceDiscoveryAgent::Error);
     void deviceScanComplete();
+    void deviceScanCanceled();
+    void connectedToDevice();
+    void disconnectedFromDevice();
 
 private:
 
-    QScopePointed<QBluetoothDeviceDiscoveryAgent> _discoveryAgent;
+    QScopedPointer<QBluetoothDeviceDiscoveryAgent> _discoveryAgent;
+
+    // more than one?
+    QScopedPointer<QLowEnergyController> _connectedDevice;
+
+    // TODO revamp this
     int _scId;
+    int _ecId;
 };
 
 #endif // #ifdef BLUETOOTH_BLE_H
