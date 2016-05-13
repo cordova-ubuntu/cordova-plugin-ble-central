@@ -42,11 +42,11 @@ public:
     }
 
     virtual const QString shortName() override {
-        return "BLECentral";
+        return "BLE";
     }
 
     static const QString fullID() {
-        return "BLECentral";
+        return "BLE";
     }
 
 public slots:
