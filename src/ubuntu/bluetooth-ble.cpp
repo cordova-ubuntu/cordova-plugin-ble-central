@@ -32,182 +32,127 @@
 namespace {
 
 const QMap<QString, QBluetoothUuid::CharacteristicType> CHARACTERISTIC_STRING_MAP =
-  {
-    {"AerobicHeartRateLowerLimit", QBluetoothUuid::AerobicHeartRateLowerLimit},
-    {"AerobicHeartRateUpperLimit", QBluetoothUuid::AerobicHeartRateUpperLimit},
-    {"AerobicThreshold", QBluetoothUuid::AerobicThreshold},
-    {"Age", QBluetoothUuid::Age},
-    {"AnaerobicHeartRateLowerLimit", QBluetoothUuid::AnaerobicHeartRateLowerLimit},
-    {"AnaerobicHeartRateUpperLimit", QBluetoothUuid::AnaerobicHeartRateUpperLimit},
-    {"AnaerobicThreshold", QBluetoothUuid::AnaerobicThreshold},
-    {"AlertCategoryID", QBluetoothUuid::AlertCategoryID},
-    {"AlertCategoryIDBitMask", QBluetoothUuid::AlertCategoryIDBitMask},
-    {"AlertLevel", QBluetoothUuid::AlertLevel},
-    {"AlertNotificationControlPoint", QBluetoothUuid::AlertNotificationControlPoint},
-    {"AlertStatus", QBluetoothUuid::AlertStatus},
-    {"ApparentWindDirection", QBluetoothUuid::ApparentWindDirection},
-    {"ApparentWindSpeed", QBluetoothUuid::ApparentWindSpeed},
-    {"Appearance", QBluetoothUuid::Appearance},
-    {"BarometricPressureTrend", QBluetoothUuid::BarometricPressureTrend},
-    {"BatteryLevel", QBluetoothUuid::BatteryLevel},
-    {"BloodPressureFeature", QBluetoothUuid::BloodPressureFeature},
-    {"BloodPressureMeasurement", QBluetoothUuid::BloodPressureMeasurement},
-    {"BodyCompositionFeature", QBluetoothUuid::BodyCompositionFeature},
-    {"BodyCompositionMeasurement", QBluetoothUuid::BodyCompositionMeasurement},
-    {"BodySensorLocation", QBluetoothUuid::BodySensorLocation},
-    {"BootKeyboardInputReport", QBluetoothUuid::BootKeyboardInputReport},
-    {"BootKeyboardOutputReport", QBluetoothUuid::BootKeyboardOutputReport},
-    {"BootMouseInputReport", QBluetoothUuid::BootMouseInputReport},
-    {"CSCFeature", QBluetoothUuid::CSCFeature},
-    {"CSCMeasurement", QBluetoothUuid::CSCMeasurement},
-    {"CurrentTime", QBluetoothUuid::CurrentTime},
-    {"CyclingPowerControlPoint", QBluetoothUuid::CyclingPowerControlPoint},
-    {"CyclingPowerFeature", QBluetoothUuid::CyclingPowerFeature},
-    {"CyclingPowerMeasurement", QBluetoothUuid::CyclingPowerMeasurement},
-    {"CyclingPowerVector", QBluetoothUuid::CyclingPowerVector},
-    {"DatabaseChangeIncrement", QBluetoothUuid::DatabaseChangeIncrement},
-    {"DateOfBirth", QBluetoothUuid::DateOfBirth},
-    {"DateOfThresholdAssessment", QBluetoothUuid::DateOfThresholdAssessment},
-    {"DateTime", QBluetoothUuid::DateTime},
-    {"DayDateTime", QBluetoothUuid::DayDateTime},
-    {"DayOfWeek", QBluetoothUuid::DayOfWeek},
-    {"DescriptorValueChanged", QBluetoothUuid::DescriptorValueChanged},
-    {"DeviceName", QBluetoothUuid::DeviceName},
-    {"DewPoint", QBluetoothUuid::DewPoint},
-    {"DSTOffset", QBluetoothUuid::DSTOffset},
-    {"Elevation", QBluetoothUuid::Elevation},
-    {"EmailAddress", QBluetoothUuid::EmailAddress},
-    {"ExactTime256", QBluetoothUuid::ExactTime256},
-    {"FatBurnHeartRateLowerLimit", QBluetoothUuid::FatBurnHeartRateLowerLimit},
-    {"FatBurnHeartRateUpperLimit", QBluetoothUuid::FatBurnHeartRateUpperLimit},
-    {"FirmwareRevisionString", QBluetoothUuid::FirmwareRevisionString},
-    {"FirstName", QBluetoothUuid::FirstName},
-    {"FiveZoneHeartRateLimits", QBluetoothUuid::FiveZoneHeartRateLimits},
-    {"Gender", QBluetoothUuid::Gender},
-    {"GlucoseFeature", QBluetoothUuid::GlucoseFeature},
-    {"GlucoseMeasurement", QBluetoothUuid::GlucoseMeasurement},
-    {"GlucoseMeasurementContext", QBluetoothUuid::GlucoseMeasurementContext},
-    {"GustFactor", QBluetoothUuid::GustFactor},
-    {"HardwareRevisionString", QBluetoothUuid::HardwareRevisionString},
-    {"MaximumRecommendedHeartRate", QBluetoothUuid::MaximumRecommendedHeartRate},
-    {"HeartRateControlPoint", QBluetoothUuid::HeartRateControlPoint},
-    {"HeartRateMax", QBluetoothUuid::HeartRateMax},
-    {"HeartRateMeasurement", QBluetoothUuid::HeartRateMeasurement},
-    {"HeatIndex", QBluetoothUuid::HeatIndex},
-    {"Height", QBluetoothUuid::Height},
-    {"HIDControlPoint", QBluetoothUuid::HIDControlPoint},
-    {"HIDInformation", QBluetoothUuid::HIDInformation},
-    {"HipCircumference", QBluetoothUuid::HipCircumference},
-    {"Humidity", QBluetoothUuid::Humidity},
-    {"IEEE1107320601RegulatoryCertificationDataList", QBluetoothUuid::IEEE1107320601RegulatoryCertificationDataList},
-    {"IntermediateCuffPressure", QBluetoothUuid::IntermediateCuffPressure},
-    {"IntermediateTemperature", QBluetoothUuid::IntermediateTemperature},
-    {"Irradiance", QBluetoothUuid::Irradiance},
-    {"Language", QBluetoothUuid::Language},
-    {"LastName", QBluetoothUuid::LastName},
-    {"LNControlPoint", QBluetoothUuid::LNControlPoint},
-    {"LNFeature", QBluetoothUuid::LNFeature},
-    {"LocalTimeInformation", QBluetoothUuid::LocalTimeInformation},
-    {"LocationAndSpeed", QBluetoothUuid::LocationAndSpeed},
-    {"MagneticDeclination", QBluetoothUuid::MagneticDeclination},
-    {"MagneticFluxDensity2D", QBluetoothUuid::MagneticFluxDensity2D},
-    {"MagneticFluxDensity3D", QBluetoothUuid::MagneticFluxDensity3D},
-    {"ManufacturerNameString", QBluetoothUuid::ManufacturerNameString},
-    {"MeasurementInterval", QBluetoothUuid::MeasurementInterval},
-    {"ModelNumberString", QBluetoothUuid::ModelNumberString},
-    {"Navigation", QBluetoothUuid::Navigation},
-    {"NewAlert", QBluetoothUuid::NewAlert},
-    {"PeripheralPreferredConnectionParameters", QBluetoothUuid::PeripheralPreferredConnectionParameters},
-    {"PeripheralPrivacyFlag", QBluetoothUuid::PeripheralPrivacyFlag},
-    {"PnPID", QBluetoothUuid::PnPID},
-    {"PollenConcentration", QBluetoothUuid::PollenConcentration},
-    {"PositionQuality", QBluetoothUuid::PositionQuality},
-    {"Pressure", QBluetoothUuid::Pressure},
-    {"ProtocolMode", QBluetoothUuid::ProtocolMode},
-    {"Rainfall", QBluetoothUuid::Rainfall},
-    {"ReconnectionAddress", QBluetoothUuid::ReconnectionAddress},
-    {"RecordAccessControlPoint", QBluetoothUuid::RecordAccessControlPoint},
-    {"ReferenceTimeInformation", QBluetoothUuid::ReferenceTimeInformation},
-    {"ReportMap", QBluetoothUuid::ReportMap},
-    {"RestingHeartRate", QBluetoothUuid::RestingHeartRate},
-    {"RingerControlPoint", QBluetoothUuid::RingerControlPoint},
-    {"RingerSetting", QBluetoothUuid::RingerSetting},
-    {"RSCFeature", QBluetoothUuid::RSCFeature},
-    {"RSCMeasurement", QBluetoothUuid::RSCMeasurement},
-    {"SCControlPoint", QBluetoothUuid::SCControlPoint},
-    {"ScanIntervalWindow", QBluetoothUuid::ScanIntervalWindow},
-    {"ScanRefresh", QBluetoothUuid::ScanRefresh},
-    {"SensorLocation", QBluetoothUuid::SensorLocation},
-    {"SerialNumberString", QBluetoothUuid::SerialNumberString},
-    {"ServiceChanged", QBluetoothUuid::ServiceChanged},
-    {"SoftwareRevisionString", QBluetoothUuid::SoftwareRevisionString},
-    {"SportTypeForAerobicAnaerobicThresholds", QBluetoothUuid::SportTypeForAerobicAnaerobicThresholds},
-    {"SupportedNewAlertCategory", QBluetoothUuid::SupportedNewAlertCategory},
-    {"SupportedUnreadAlertCategory", QBluetoothUuid::SupportedUnreadAlertCategory},
-    {"SystemID", QBluetoothUuid::SystemID},
-    {"Temperature", QBluetoothUuid::Temperature},
-    {"TemperatureMeasurement", QBluetoothUuid::TemperatureMeasurement},
-    {"TemperatureType", QBluetoothUuid::TemperatureType},
-    {"ThreeZoneHeartRateLimits", QBluetoothUuid::ThreeZoneHeartRateLimits},
-    {"TimeAccuracy", QBluetoothUuid::TimeAccuracy},
-    {"TimeSource", QBluetoothUuid::TimeSource},
-    {"TimeUpdateControlPoint", QBluetoothUuid::TimeUpdateControlPoint},
-    {"TimeUpdateState", QBluetoothUuid::TimeUpdateState},
-    {"TimeWithDST", QBluetoothUuid::TimeWithDST},
-    {"TimeZone", QBluetoothUuid::TimeZone},
-    {"TrueWindDirection", QBluetoothUuid::TrueWindDirection},
-    {"TrueWindSpeed", QBluetoothUuid::TrueWindSpeed},
-    {"TwoZoneHeartRateLimits", QBluetoothUuid::TwoZoneHeartRateLimits},
-    {"TxPowerLevel", QBluetoothUuid::TxPowerLevel},
-    {"UnreadAlertStatus", QBluetoothUuid::UnreadAlertStatus},
-    {"UserControlPoint", QBluetoothUuid::UserControlPoint},
-    {"UserIndex", QBluetoothUuid::UserIndex},
-    {"UVIndex", QBluetoothUuid::UVIndex},
-    {"VO2Max", QBluetoothUuid::VO2Max},
-    {"WaistCircumference", QBluetoothUuid::WaistCircumference},
-    {"Weight", QBluetoothUuid::Weight},
-    {"WeightMeasurement", QBluetoothUuid::WeightMeasurement},
-    {"WeightScaleFeature", QBluetoothUuid::WeightScaleFeature},
-    {"WindChill", QBluetoothUuid::WindChill}
-  };
+    {
+{"DeviceName", QBluetoothUuid::DeviceName},
+{"Appearance", QBluetoothUuid::Appearance},
+{"PeripheralPrivacyFlag", QBluetoothUuid::PeripheralPrivacyFlag},
+{"ReconnectionAddress", QBluetoothUuid::ReconnectionAddress},
+{"PeripheralPreferredConnectionParameters", QBluetoothUuid::PeripheralPreferredConnectionParameters},
+{"ServiceChanged", QBluetoothUuid::ServiceChanged},
+{"AlertLevel", QBluetoothUuid::AlertLevel},
+{"TxPowerLevel", QBluetoothUuid::TxPowerLevel},
+{"DateTime", QBluetoothUuid::DateTime},
+{"DayOfWeek", QBluetoothUuid::DayOfWeek},
+{"DayDateTime", QBluetoothUuid::DayDateTime},
+{"ExactTime256", QBluetoothUuid::ExactTime256},
+{"DSTOffset", QBluetoothUuid::DSTOffset},
+{"TimeZone", QBluetoothUuid::TimeZone},
+{"LocalTimeInformation", QBluetoothUuid::LocalTimeInformation},
+{"TimeWithDST", QBluetoothUuid::TimeWithDST},
+{"TimeAccuracy", QBluetoothUuid::TimeAccuracy},
+{"TimeSource", QBluetoothUuid::TimeSource},
+{"ReferenceTimeInformation", QBluetoothUuid::ReferenceTimeInformation},
+{"TimeUpdateControlPoint", QBluetoothUuid::TimeUpdateControlPoint},
+{"TimeUpdateState", QBluetoothUuid::TimeUpdateState},
+{"GlucoseMeasurement", QBluetoothUuid::GlucoseMeasurement},
+{"BatteryLevel", QBluetoothUuid::BatteryLevel},
+{"TemperatureMeasurement", QBluetoothUuid::TemperatureMeasurement},
+{"TemperatureType", QBluetoothUuid::TemperatureType},
+{"IntermediateTemperature", QBluetoothUuid::IntermediateTemperature},
+{"MeasurementInterval", QBluetoothUuid::MeasurementInterval},
+{"BootKeyboardInputReport", QBluetoothUuid::BootKeyboardInputReport},
+{"SystemID", QBluetoothUuid::SystemID},
+{"ModelNumberString", QBluetoothUuid::ModelNumberString},
+{"SerialNumberString", QBluetoothUuid::SerialNumberString},
+{"FirmwareRevisionString", QBluetoothUuid::FirmwareRevisionString},
+{"HardwareRevisionString", QBluetoothUuid::HardwareRevisionString},
+{"SoftwareRevisionString", QBluetoothUuid::SoftwareRevisionString},
+{"ManufacturerNameString", QBluetoothUuid::ManufacturerNameString},
+{"IEEE1107320601RegulatoryCertificationDataList", QBluetoothUuid::IEEE1107320601RegulatoryCertificationDataList},
+{"CurrentTime", QBluetoothUuid::CurrentTime},
+{"ScanRefresh", QBluetoothUuid::ScanRefresh},
+{"BootKeyboardOutputReport", QBluetoothUuid::BootKeyboardOutputReport},
+{"BootMouseInputReport", QBluetoothUuid::BootMouseInputReport},
+{"GlucoseMeasurementContext", QBluetoothUuid::GlucoseMeasurementContext},
+{"BloodPressureMeasurement", QBluetoothUuid::BloodPressureMeasurement},
+{"IntermediateCuffPressure", QBluetoothUuid::IntermediateCuffPressure},
+{"HeartRateMeasurement", QBluetoothUuid::HeartRateMeasurement},
+{"BodySensorLocation", QBluetoothUuid::BodySensorLocation},
+{"HeartRateControlPoint", QBluetoothUuid::HeartRateControlPoint},
+{"AlertStatus", QBluetoothUuid::AlertStatus},
+{"RingerControlPoint", QBluetoothUuid::RingerControlPoint},
+{"RingerSetting", QBluetoothUuid::RingerSetting},
+{"AlertCategoryIDBitMask", QBluetoothUuid::AlertCategoryIDBitMask},
+{"AlertCategoryID", QBluetoothUuid::AlertCategoryID},
+{"AlertNotificationControlPoint", QBluetoothUuid::AlertNotificationControlPoint},
+{"UnreadAlertStatus", QBluetoothUuid::UnreadAlertStatus},
+{"NewAlert", QBluetoothUuid::NewAlert},
+{"SupportedNewAlertCategory", QBluetoothUuid::SupportedNewAlertCategory},
+{"SupportedUnreadAlertCategory", QBluetoothUuid::SupportedUnreadAlertCategory},
+{"BloodPressureFeature", QBluetoothUuid::BloodPressureFeature},
+{"HIDInformation", QBluetoothUuid::HIDInformation},
+{"ReportMap", QBluetoothUuid::ReportMap},
+{"HIDControlPoint", QBluetoothUuid::HIDControlPoint},
+{"Report", QBluetoothUuid::Report},
+{"ProtocolMode", QBluetoothUuid::ProtocolMode},
+{"ScanIntervalWindow", QBluetoothUuid::ScanIntervalWindow},
+{"PnPID", QBluetoothUuid::PnPID},
+{"GlucoseFeature", QBluetoothUuid::GlucoseFeature},
+{"RecordAccessControlPoint", QBluetoothUuid::RecordAccessControlPoint},
+{"RSCMeasurement", QBluetoothUuid::RSCMeasurement},
+{"RSCFeature", QBluetoothUuid::RSCFeature},
+{"SCControlPoint", QBluetoothUuid::SCControlPoint},
+{"CSCMeasurement", QBluetoothUuid::CSCMeasurement},
+{"CSCFeature", QBluetoothUuid::CSCFeature},
+{"SensorLocation", QBluetoothUuid::SensorLocation},
+{"CyclingPowerMeasurement", QBluetoothUuid::CyclingPowerMeasurement},
+{"CyclingPowerVector", QBluetoothUuid::CyclingPowerVector},
+{"CyclingPowerFeature", QBluetoothUuid::CyclingPowerFeature},
+{"CyclingPowerControlPoint", QBluetoothUuid::CyclingPowerControlPoint},
+{"LocationAndSpeed", QBluetoothUuid::LocationAndSpeed},
+{"Navigation", QBluetoothUuid::Navigation},
+{"PositionQuality", QBluetoothUuid::PositionQuality},
+{"LNFeature", QBluetoothUuid::LNFeature},
+{"LNControlPoint", QBluetoothUuid::LNControlPoint}
+    };
 
-bool isBleDevice(QBluetoothDeviceInfo::CoreConfiguration cc) {
-  return (cc & QBluetoothDeviceInfo::LowEnergyCoreConfiguration)
-      || (cc & QBluetoothDeviceInfo::BaseRateAndLowEnergyCoreConfiguration);
+bool isBleDevice(QFlags<QBluetoothDeviceInfo::CoreConfiguration> cc) {
+  return cc.testFlag(QBluetoothDeviceInfo::LowEnergyCoreConfiguration)
+      || cc.testFlag(QBluetoothDeviceInfo::BaseRateAndLowEnergyCoreConfiguration);
 }
 
-QString serviceClassesToString(QBluetoothDeviceInfo::ServiceClass sc) {
+QString serviceClassesToString(QFlags<QBluetoothDeviceInfo::ServiceClass> sc) {
   // TODO i8n
   QStringList result;
 
-  if (sc & QBluetoothDeviceInfo::NoService)
+  if (sc.testFlag(QBluetoothDeviceInfo::NoService))
     result << QStringLiteral("NoService");
 
-  if (sc & QBluetoothDeviceInfo::PositioningService)
+  if (sc.testFlag(QBluetoothDeviceInfo::PositioningService))
     result << QStringLiteral("PositioningService");
 
-  if (sc & QBluetoothDeviceInfo::NetworkingService)
+  if (sc.testFlag(QBluetoothDeviceInfo::NetworkingService))
     result << QStringLiteral("NetworkingService");
 
-  if (sc & QBluetoothDeviceInfo::RenderingService)
+  if (sc.testFlag(QBluetoothDeviceInfo::RenderingService))
     result << QStringLiteral("RenderingService");
 
-  if (sc & QBluetoothDeviceInfo::CapturingService)
+  if (sc.testFlag(QBluetoothDeviceInfo::CapturingService))
     result << QStringLiteral("CapturingService");
 
-  if (sc & QBluetoothDeviceInfo::ObjectTransferService)
+  if (sc.testFlag(QBluetoothDeviceInfo::ObjectTransferService))
     result << QStringLiteral("ObjectTransferService");
 
-  if (sc & QBluetoothDeviceInfo::AudioService)
+  if (sc.testFlag(QBluetoothDeviceInfo::AudioService))
     result << QStringLiteral("AudioService");
 
-  if (sc & QBluetoothDeviceInfo::TelephonyService)
+  if (sc.testFlag(QBluetoothDeviceInfo::TelephonyService))
     result << QStringLiteral("TelephonyService");
 
-  if (sc & QBluetoothDeviceInfo::InformationService)
+  if (sc.testFlag(QBluetoothDeviceInfo::InformationService))
     result << QStringLiteral("InformationService");
 
-  if (sc & QBluetoothDeviceInfo::AllServices)
+  if (sc.testFlag(QBluetoothDeviceInfo::AllServices))
     result << QStringLiteral("AllServices");
 
   return result.join(";");
@@ -262,6 +207,7 @@ void BleCentral::deviceDiscovered(const QBluetoothDeviceInfo& deviceInfo) {
 }
 
 void BleCentral::deviceScanError(QBluetoothDeviceDiscoveryAgent::Error error) {
+  Q_UNUSED(error);
   // TODO complete
   this->cb(_ecId, "Scan device error");
 }
@@ -277,11 +223,11 @@ void BleCentral::connectedToDevice() {
   // static_cast<BleCentral>(QObject::sender());
 
   QVariantMap p;
-  p.insert("name", _connectedDevice.remoteName());
-  p.insert("id", _connectedDevice.remoteAddress().toString());
+  //  p.insert("name", _connectedDevice->remoteName());
+  p.insert("id", _connectedDevice->remoteAddress().toString());
 
   QVariantList services;
-  Q_FOREACH(QBluetoothUuid uuid, _connectedDevice.services()) {
+  Q_FOREACH(QBluetoothUuid uuid, _connectedDevice->services()) {
     bool ok = false;
     services.append(QString::number(uuid.toUInt32(&ok)));
     // TODO handle ok
@@ -289,12 +235,12 @@ void BleCentral::connectedToDevice() {
   p.insert("services", services);
 
   QVariantList characteristics;
-  Q_FOREACH(QBluetoothUuid uuid, _connectedDevice.services()) {
+  Q_FOREACH(QBluetoothUuid uuid, _connectedDevice->services()) {
     bool ok = false;
     QString serviceUuid = QString::number(uuid.toUInt32(&ok));
 
     QLowEnergyService * service =
-      _connectedDevice.createServiceObject(uuid);
+      _connectedDevice->createServiceObject(uuid);
 
     Q_FOREACH(QLowEnergyCharacteristic characteristic
               , service->characteristics()) {
@@ -555,26 +501,18 @@ void BleCentral::read(int scId, int ecId
   _scId = scId;
   _ecId = ecId;
 
-  Q_FOREACH(QBluetoothUuid uuid, _connectedDevice.services()) {
+  Q_FOREACH(QBluetoothUuid uuid, _connectedDevice->services()) {
     if (serviceUuid == QBluetoothUuid::serviceClassToString(uuid)) {
       QLowEnergyService * service =
-        _connectedDevice.createServiceObject(uuid);
+        _connectedDevice->createServiceObject(uuid);
 
       QLowEnergyCharacteristic characteristic =
         service->characteristic(QBluetoothUuid(characteristicUuid));
 
-      // TODO error & all
-      QObject::connect(service,
-                       &QLowEnergyService::characteristicRead,
-                       service,
-                       [this, service](const QLowEnergyCharacteristic &characteristic,
-                                       const QByteArray &value)
-                       {
-                         this->cb(this->_scId, QString::fromUtf8(value.toBase64()));
-                         delete service;
-                       });
-
-      service->readCharacteristic(characteristic);
+      this->cb(this->_scId,
+               QString::fromUtf8(
+                   characteristic.value().toBase64()));
+      delete service;
 
       return;
     }
