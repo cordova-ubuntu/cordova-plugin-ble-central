@@ -108,6 +108,11 @@ private slots:
     void deviceScanCanceled();
     void connectedToDevice();
     void disconnectedFromDevice();
+    void characteristicChanged(const QLowEnergyCharacteristic &info,
+                               const QByteArray &value);
+    void characteristicWritten(const QLowEnergyCharacteristic &info,
+                               const QByteArray &value);
+    void bleServiceError(QLowEnergyService::ServiceError error);
 
 private:
 
@@ -115,6 +120,10 @@ private:
 
     // more than one?
     QScopedPointer<QLowEnergyController> _connectedDevice;
+
+    typedef QPair<int, int> CallbackIds;
+    QMap<QString, QList<CallbackIds>>
+      _notificationCallbacksPerCharacteristic;
 
     // TODO revamp this
     int _scId;

@@ -27,6 +27,9 @@
 #include <QLowEnergyDescriptor>
 #include <QLowEnergyService>
 
+#include <QJsonDocument>
+#include <QJsonObject>
+
 #include <cordova.h>
 
 namespace {
@@ -157,7 +160,21 @@ QString serviceClassesToString(QFlags<QBluetoothDeviceInfo::ServiceClass> sc) {
 
   return result.join(";");
 }
-  
+
+QString serviceErrorToString(QLowEnergyService::ServiceError error) {
+  switch(error) {
+  case QLowEnergyService::NoError:
+    return QStringLiteral("No Error");
+  case QLowEnergyService::OperationError:
+    return QStringLiteral("Operation Error");
+  case QLowEnergyService::CharacteristicWriteError:
+    return QStringLiteral("Characteristic Write Error");
+  case QLowEnergyService::DescriptorWriteError:
+    return QStringLiteral("Descriptor Write Error");
+  }
+  return QStringLiteral("Unknown");
+}
+
 }
 
 
@@ -213,6 +230,7 @@ void BleCentral::deviceScanError(QBluetoothDeviceDiscoveryAgent::Error error) {
 }
 
 void BleCentral::deviceScanComplete() {
+  this->cb(_scId, "Complete");
 }
 
 void BleCentral::deviceScanCanceled() {
@@ -259,13 +277,42 @@ void BleCentral::connectedToDevice() {
   }
   p.insert("characteristics", characteristics);
 
-  this->cb(_scId, QString::fromUtf8(QVariant(p).toJsonDocument().toJson()));
+  this->cb(_scId, QString::fromUtf8(QJsonDocument::fromVariant(p).toJson()));
 }
 
 void BleCentral::disconnectedFromDevice() {
   this->cb(_scId, "Disconnected");
 
   _connectedDevice.reset();
+}
+
+void BleCentral::bleServiceError(QLowEnergyService::ServiceError error) {
+  this->cb(_ecId, serviceErrorToString(error));
+}
+
+void BleCentral::characteristicChanged(const QLowEnergyCharacteristic &info,
+                                       const QByteArray &value) {
+  QString characteristicUuid =
+    QString::number(info.uuid().toUInt16());
+
+  if (_notificationCallbacksPerCharacteristic.contains(
+         characteristicUuid)) {
+    QList<CallbackIds> ids =
+      _notificationCallbacksPerCharacteristic.find(characteristicUuid).value();
+
+    Q_FOREACH(CallbackIds id, ids) {
+      this->cb(id.first,
+               QString::fromUtf8(value.toBase64()));
+    }
+  }
+}
+
+void BleCentral::characteristicWritten(const QLowEnergyCharacteristic &info,
+                                       const QByteArray &value) {
+  Q_UNUSED(info);
+  Q_UNUSED(value);
+  // TODO sender disconnected?
+  this->cb(_scId, "Characteristic written");
 }
 
 /**
@@ -421,14 +468,33 @@ void BleCentral::connect(int scId, int ecId
       _ecId = ecId;
 
       QObject::connect(_connectedDevice.data(),
-                       SIGNAL(QLowEnergyController::connected()),
+                       SIGNAL(connected()),
                        this,
                        SLOT(connectedToDevice()));
 
       QObject::connect(_connectedDevice.data(),
-                       SIGNAL(QLowEnergyController::disconnected()),
+                       SIGNAL(disconnected()),
                        this,
                        SLOT(disconnectedFromDevice()));
+
+      QObject::connect(_connectedDevice.data(),
+                       SIGNAL(characteristicWritten(const QLowEnergyCharacteristic &,
+                                                    const QByteArray &)),
+                       this,
+                       SLOT(characteristicWritten(const QLowEnergyCharacteristic &,
+                                                  const QByteArray &)));
+
+      QObject::connect(_connectedDevice.data(),
+                       SIGNAL(characteristicChanged(const QLowEnergyCharacteristic &,
+                                                    const QByteArray &)),
+                       this,
+                       SLOT(characteristicChanged(const QLowEnergyCharacteristic &,
+                                                  const QByteArray &)));
+
+      QObject::connect(_connectedDevice.data(),
+                       SIGNAL(error(QLowEnergyService::ServiceError)),
+                       this,
+                       SLOT(bleServiceError(QLowEnergyService::ServiceError)));
     }
   }
 }
@@ -544,12 +610,40 @@ void BleCentral::write(int scId, int ecId
                        , const QString& serviceUuid
                        , const QString& characteristicUuid
                        , const QString& binaryData) {
-  Q_UNUSED(scId);
-  Q_UNUSED(deviceId);
-  Q_UNUSED(serviceUuid);
-  Q_UNUSED(characteristicUuid);
-  Q_UNUSED(binaryData);
-  this->cb(ecId, "NOT IMPLEMENTED");
+  if (!_connectedDevice) {
+    this->cb(ecId,
+            QString("Not connected to device %1")
+              .arg(deviceId));
+    return;
+  }
+
+  if (_connectedDevice->remoteAddress().toString() != deviceId) {
+    // TODO i8n
+    this->cb(ecId,
+            QString("Not connected to device %1 but to device %2")
+              .arg(deviceId)
+              .arg(_connectedDevice->remoteAddress().toString()));
+    return;
+  }
+
+  QLowEnergyService * service =
+    _connectedDevice->createServiceObject(
+        QBluetoothUuid(QString(serviceUuid).toUInt()));
+  if (!service) {
+      // TODO i8n
+    this->cb(ecId, "Could not create low energy service object");
+    return;
+  }
+
+  _scId = scId;
+  _ecId = ecId;
+
+  QLowEnergyCharacteristic characteristic =
+    service->characteristic(
+        QBluetoothUuid(characteristicUuid.toUInt()));
+
+  service->writeCharacteristic(characteristic,
+                               QByteArray::fromBase64(binaryData.toUtf8()));
 }
 
 /**
@@ -572,12 +666,41 @@ void BleCentral::writeWithoutResponse(int scId, int ecId
                                       , const QString& serviceUuid
                                       , const QString& characteristicUuid
                                       , const QString& binaryData) {
-  Q_UNUSED(scId);
-  Q_UNUSED(deviceId);
-  Q_UNUSED(serviceUuid);
-  Q_UNUSED(characteristicUuid);
-  Q_UNUSED(binaryData);
-  this->cb(ecId, "NOT IMPLEMENTED");
+  if (!_connectedDevice) {
+    this->cb(ecId,
+            QString("Not connected to device %1")
+              .arg(deviceId));
+    return;
+  }
+
+  if (_connectedDevice->remoteAddress().toString() != deviceId) {
+    // TODO i8n
+    this->cb(ecId,
+            QString("Not connected to device %1 but to device %2")
+              .arg(deviceId)
+              .arg(_connectedDevice->remoteAddress().toString()));
+    return;
+  }
+
+  QLowEnergyService * service =
+    _connectedDevice->createServiceObject(
+        QBluetoothUuid(QString(serviceUuid).toUInt()));
+  if (!service) {
+      // TODO i8n
+    this->cb(ecId, "Could not create low energy service object");
+    return;
+  }
+
+  _scId = scId;
+  _ecId = ecId;
+
+  QLowEnergyCharacteristic characteristic =
+    service->characteristic(
+        QBluetoothUuid(characteristicUuid.toUInt()));
+
+  service->writeCharacteristic(characteristic,
+                               QByteArray::fromBase64(binaryData.toUtf8()),
+                               QLowEnergyService::WriteWithoutResponse);
 }
 
 /**
@@ -598,11 +721,40 @@ void BleCentral::startNotification(int scId, int ecId
                                    , const QString& deviceId
                                    , const QString& serviceUuid
                                    , const QString& characteristicUuid) {
-  Q_UNUSED(scId);
-  Q_UNUSED(deviceId);
-  Q_UNUSED(serviceUuid);
-  Q_UNUSED(characteristicUuid);
-  this->cb(ecId, "NOT IMPLEMENTED");
+  if (!_connectedDevice) {
+    this->cb(ecId,
+             QString("Not connected to device %1")
+               .arg(deviceId));
+    return;
+  }
+
+  if (_connectedDevice->remoteAddress().toString() != deviceId) {
+    // TODO i8n
+    this->cb(ecId,
+             QString("Not connected to device %1 but to device %2")
+               .arg(deviceId)
+               .arg(_connectedDevice->remoteAddress().toString()));
+    return;
+  }
+
+  QLowEnergyService * service =
+    _connectedDevice->createServiceObject(
+        QBluetoothUuid(QString(serviceUuid).toUInt()));
+  if (!service) {
+    // TODO i8n
+    this->cb(ecId, "Could not create low energy service object");
+    return;
+  }
+
+  if (_notificationCallbacksPerCharacteristic.contains(
+         characteristicUuid)) {
+    _notificationCallbacksPerCharacteristic
+      .find(characteristicUuid)->append(CallbackIds(scId, ecId));
+  } else {
+    _notificationCallbacksPerCharacteristic.insert(
+        characteristicUuid,
+        (QList<CallbackIds>() << CallbackIds(scId, ecId)));
+  }
 }
 
 /**
@@ -620,11 +772,34 @@ void BleCentral::stopNotification(int scId, int ecId
                                   , const QString& deviceId
                                   , const QString& serviceUuid
                                   , const QString& characteristicUuid) {
-  Q_UNUSED(scId);
-  Q_UNUSED(deviceId);
   Q_UNUSED(serviceUuid);
-  Q_UNUSED(characteristicUuid);
-  this->cb(ecId, "NOT IMPLEMENTED");
+
+  if (!_connectedDevice) {
+    this->cb(ecId,
+             QString("Not connected to device %1")
+               .arg(deviceId));
+    return;
+  }
+
+  if (_connectedDevice->remoteAddress().toString() != deviceId) {
+    // TODO i8n
+    this->cb(ecId,
+             QString("Not connected to device %1 but to device %2")
+               .arg(deviceId)
+               .arg(_connectedDevice->remoteAddress().toString()));
+    return;
+  }
+
+  if (_notificationCallbacksPerCharacteristic.contains(
+         characteristicUuid)) {
+    // TODO fix this, not remove
+    _notificationCallbacksPerCharacteristic
+      .remove(characteristicUuid);
+
+    this->cb(scId, "");
+  } else {
+    this->cb(ecId, "No notifications started for characteristic");
+  }
 }
 
 /**
