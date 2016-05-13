@@ -228,16 +228,13 @@ void BleCentral::connectedToDevice() {
 
   QVariantList services;
   Q_FOREACH(QBluetoothUuid uuid, _connectedDevice->services()) {
-    bool ok = false;
-    services.append(QString::number(uuid.toUInt32(&ok)));
-    // TODO handle ok
+    services.append(QString::number(uuid.toUInt16()));
   }
   p.insert("services", services);
 
   QVariantList characteristics;
   Q_FOREACH(QBluetoothUuid uuid, _connectedDevice->services()) {
-    bool ok = false;
-    QString serviceUuid = QString::number(uuid.toUInt32(&ok));
+    QString serviceUuid = QString::number(uuid.toUInt16());
 
     QLowEnergyService * service =
       _connectedDevice->createServiceObject(uuid);
@@ -247,9 +244,13 @@ void BleCentral::connectedToDevice() {
       QVariantMap c;
 
       c.insert("service", serviceUuid);
-      c.insert("characteristic", characteristic.name());
-      c.insert("uuid", QBluetoothUuid::characteristicToString(characteristic.uuid()));
-      c.insert("value", QString::fromUtf8(characteristic.value()));
+      c.insert("characteristic", 
+               QBluetoothUuid::characteristicToString(
+                   static_cast<QBluetoothUuid::CharacteristicType>(
+                       characteristic.uuid().toUInt16())));
+      c.insert("uuid", QString::number(characteristic.uuid().toUInt16()));
+
+      // TODO descriptor, properties
 
       characteristics.append(QVariant(c));
     }
@@ -258,7 +259,7 @@ void BleCentral::connectedToDevice() {
   }
   p.insert("characteristics", characteristics);
 
-  this->cb(_scId, QString::fromUtf8(p.toJsonDocument().toJson()));
+  this->cb(_scId, QString::fromUtf8(QVariant(p).toJsonDocument().toJson()));
 }
 
 void BleCentral::disconnectedFromDevice() {
@@ -413,21 +414,21 @@ void BleCentral::connect(int scId, int ecId
       continue;
     }
     if (di.address().toString() == deviceId) {
-      _connectedDevice.reset(new QLowEnergyController(di, this));
+      _connectedDevice.reset(new QLowEnergyController(di.address(), this));
 
       // TODO revamp
       _scId = scId;
       _ecId = ecId;
 
-      connect(_connectedDevice.data(),
-              SIGNAL(QLowEnergyController::connected()),
-              this,
-              SLOT(connectedToDevice()));
+      QObject::connect(_connectedDevice.data(),
+                       SIGNAL(QLowEnergyController::connected()),
+                       this,
+                       SLOT(connectedToDevice()));
 
-      connect(_connectedDevice.data(),
-              SIGNAL(QLowEnergyController::disconnected()),
-              this,
-              SLOT(disconnectedFromDevice()));
+      QObject::connect(_connectedDevice.data(),
+                       SIGNAL(QLowEnergyController::disconnected()),
+                       this,
+                       SLOT(disconnectedFromDevice()));
     }
   }
 }
@@ -502,16 +503,20 @@ void BleCentral::read(int scId, int ecId
   _ecId = ecId;
 
   Q_FOREACH(QBluetoothUuid uuid, _connectedDevice->services()) {
-    if (serviceUuid == QBluetoothUuid::serviceClassToString(uuid)) {
+    if (serviceUuid == QString::number(uuid.toUInt16())) {
       QLowEnergyService * service =
         _connectedDevice->createServiceObject(uuid);
 
       QLowEnergyCharacteristic characteristic =
-        service->characteristic(QBluetoothUuid(characteristicUuid));
+        service->characteristic(
+            QBluetoothUuid(
+                static_cast<QBluetoothUuid::CharacteristicType>(
+                    characteristicUuid.toUInt())));
 
       this->cb(this->_scId,
                QString::fromUtf8(
                    characteristic.value().toBase64()));
+
       delete service;
 
       return;
