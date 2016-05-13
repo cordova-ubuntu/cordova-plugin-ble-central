@@ -75,7 +75,7 @@
         <!-- add BLE specific bits to ubuntu click chroot & config -->
         <config-file target="config.xml" parent="/*">
           <feature name="BLE">
-            <param policy_group="bluetooth" policy_version="1.3" />
+            <!--            <param policy_group="bluetooth" policy_version="1.3" /> -->
             <deps>
               <pkgConfig>["Qt5Bluetooth"]</pkgConfig>
               <deb>["qtconnectivity5-dev:ARCH", "qml-module-qtbluetooth:ARCH", "libqt5bluetooth5:ARCH"]</deb>
