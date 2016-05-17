@@ -79,14 +79,41 @@ var app = {
             ble.write(deviceId,
                      "f000aa00-0451-4000-b000-000000000000",
                      "F000AA02-0451-4000-B000-000000000000",
-                      "MjU1", // configData.buffer 
-                      function() { console.log("Started temperature."); },
+                      "MQ==", // configData.buffer 
+                      function() {
+                          console.log("Started temperature.");
+
+                          setInterval(function() {
+                              ble.read(deviceId,
+                                       "f000aa00-0451-4000-b000-000000000000",
+                                       "F000AA01-0451-4000-B000-000000000000",
+                                       function(d) {
+                                           accelerometerData.innerHTML = "Temperature reading " + d;
+                                       },
+                                       app.onError);
+                          }, 1000);
+
+                          ble.startNotification(deviceId,
+                                                button.service,
+                                                button.data,
+                                                app.onButtonData,
+                                                app.onError);
+
+                          // subscribing for incoming data
+                          ble.startNotification(
+                              deviceId,
+                              "f000aa00-0451-4000-b000-000000000000", // service
+                              "F000AA01-0451-4000-B000-000000000000",
+                              app.onAccelerometerData,
+                              app.onError);
+                      },
                       app.onError);
+/*
 
             ble.write(deviceId,
                       accelerometer.service,
                       accelerometer.configuration,
-                      "MjU1", // configData.buffer 
+                      "MQ==", // configData.buffer 
                       function() { console.log("Started accelerometer."); },
                       app.onError);
 
@@ -95,13 +122,6 @@ var app = {
                      accelerometer.configuration,
                      "F000AA11-0451-4000-B000-000000000000",
                      function(d) { console.log("data " + d); },
-                     app.onError);
-
-            ble.read(deviceId,
-                     "f000aa00-0451-4000-b000-000000000000",
-                     "F000AA02-0451-4000-B000-000000000000",
-                     "F000AA01-0451-4000-B000-000000000000",
-                     function(d) { console.log("data t " + d); },
                      app.onError);
 
             ble.startNotification(deviceId,
@@ -116,7 +136,7 @@ var app = {
                                   accelerometer.data,
                                   app.onAccelerometerData,
                                   app.onError);
-
+*/
             // turn accelerometer on
             disconnectButton.dataset.deviceId = deviceId;
 
@@ -128,7 +148,9 @@ var app = {
     onButtonData: function(data) {
         console.log(data);
         var message;
-        var a = new Uint8Array(data);
+        var a = atob(data); // new Uint8Array(data);
+        buttonState.innerHTML = a;
+        return;
         switch(a[0]) { // should really check the bits in case bit 3 is set too
         case 0:
             message = "No buttons are pressed";
@@ -150,6 +172,10 @@ var app = {
     },
     onAccelerometerData: function(data) {
         console.log(data);
+        var a = atob(data);
+        accelerometerData.innerHTML = a;
+        return;
+        
         var message;
         var a = new Uint8Array(data);
 
