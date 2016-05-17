@@ -40,9 +40,9 @@ var app = {
     },
     bindEvents: function() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
-        refreshButton.addEventListener('touchstart', this.refreshDeviceList, false);
-        disconnectButton.addEventListener('touchstart', this.disconnect, false);
-        deviceList.addEventListener('touchstart', this.connect, false); // assume not scrolling
+        refreshButton.addEventListener('click', this.refreshDeviceList, false);
+        disconnectButton.addEventListener('click', this.disconnect, false);
+        deviceList.addEventListener('click', this.connect, false); // assume not scrolling
     },
     onDeviceReady: function() {
         app.refreshDeviceList();
@@ -70,20 +70,58 @@ var app = {
         }
     },
     connect: function(e) {
-        var deviceId = e.target.dataset.deviceId,
-            onConnect = function() {
+        var deviceId = e.target.dataset.deviceId;
+        var onConnect = function(infos) {
 
-                ble.startNotification(deviceId, button.service, button.data, app.onButtonData, app.onError);
-                // subscribing for incoming data
-                ble.startNotification(deviceId, accelerometer.service, accelerometer.data, app.onAccelerometerData, app.onError);
-                // turn accelerometer on
-                var configData = new Uint8Array(1);
-                configData[0] = 0xFF;
-                ble.write(deviceId, accelerometer.service, accelerometer.configuration, configData.buffer, 
-                    function() { console.log("Started accelerometer."); },app.onError);
-                disconnectButton.dataset.deviceId = deviceId;
-                app.showDetailPage();
-            };
+            var configData = new Uint8Array(1);
+            configData[0] = 0xFF;
+
+            ble.write(deviceId,
+                     "f000aa00-0451-4000-b000-000000000000",
+                     "F000AA02-0451-4000-B000-000000000000",
+                      "MjU1", // configData.buffer 
+                      function() { console.log("Started temperature."); },
+                      app.onError);
+
+            ble.write(deviceId,
+                      accelerometer.service,
+                      accelerometer.configuration,
+                      "MjU1", // configData.buffer 
+                      function() { console.log("Started accelerometer."); },
+                      app.onError);
+
+            ble.read(deviceId,
+                     accelerometer.service,
+                     accelerometer.configuration,
+                     "F000AA11-0451-4000-B000-000000000000",
+                     function(d) { console.log("data " + d); },
+                     app.onError);
+
+            ble.read(deviceId,
+                     "f000aa00-0451-4000-b000-000000000000",
+                     "F000AA02-0451-4000-B000-000000000000",
+                     "F000AA01-0451-4000-B000-000000000000",
+                     function(d) { console.log("data t " + d); },
+                     app.onError);
+
+            ble.startNotification(deviceId,
+                                  button.service,
+                                  button.data,
+                                  app.onButtonData,
+                                  app.onError);
+
+            // subscribing for incoming data
+            ble.startNotification(deviceId,
+                                  accelerometer.service,
+                                  accelerometer.data,
+                                  app.onAccelerometerData,
+                                  app.onError);
+
+            // turn accelerometer on
+            disconnectButton.dataset.deviceId = deviceId;
+
+            app.showDetailPage();
+        };
 
         ble.connect(deviceId, onConnect, app.onError);
     },
@@ -136,6 +174,6 @@ var app = {
         detailPage.hidden = false;
     },
     onError: function(reason) {
-        alert("ERROR: " + reason); // real apps should use notification.alert
+        console.log("ERROR: " + reason); // real apps should use notification.alert
     }
 };

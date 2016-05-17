@@ -88,7 +88,9 @@ module.exports = {
             convertToNativeJS(peripheral);
             success(peripheral);
         };
-        cordova.exec(successWrapper, failure, 'BLE', 'connect', [device_id]);
+        // TODO ubuntu
+        // successWrapper
+        cordova.exec(success, failure, 'BLE', 'connect', [device_id]);
     },
 
     disconnect: function (device_id, success, failure) {
