@@ -23,6 +23,7 @@
 
 #include <QVariant>
 #include <QString>
+#include <QMetaObject>
 
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothDeviceInfo>
@@ -102,32 +103,19 @@ public slots:
 
 private slots:
 
-    void deviceDiscovered(const QBluetoothDeviceInfo&);
-    void deviceScanError(QBluetoothDeviceDiscoveryAgent::Error);
-    void deviceScanComplete();
-    void deviceScanCanceled();
-    void connectedToDevice();
-    void disconnectedFromDevice();
-    void characteristicChanged(const QLowEnergyCharacteristic &info,
-                               const QByteArray &value);
-    void characteristicWritten(const QLowEnergyCharacteristic &info,
-                               const QByteArray &value);
+    void deviceDiscovered(int cbId, const QBluetoothDeviceInfo&);
+    void deviceScanError(int cbId, QBluetoothDeviceDiscoveryAgent::Error);
     void bleServiceError(QLowEnergyService::ServiceError error);
 
 private:
+
+    void startScanInternal(int scId, int ecId);
+    QVariantMap getConnectedDeviceInfos();
 
     QScopedPointer<QBluetoothDeviceDiscoveryAgent> _discoveryAgent;
 
     // more than one?
     QScopedPointer<QLowEnergyController> _connectedDevice;
-
-    typedef QPair<int, int> CallbackIds;
-    QMap<QString, QList<CallbackIds>>
-      _notificationCallbacksPerCharacteristic;
-
-    // TODO revamp this
-    int _scId;
-    int _ecId;
 };
 
 #endif // #ifdef BLUETOOTH_BLE_H
