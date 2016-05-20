@@ -127,7 +127,7 @@ void BleCentral::deviceDiscovered(int cbId,
   p.insert("rssi", QString("%1").arg(deviceInfo.rssi()));
   p.insert("advertising", serviceClassesToString(deviceInfo.serviceClasses()));
 
-  this->cb(cbId, p);
+  this->callbackWithoutRemove(cbId, CordovaInternal::format(p));
 }
 
 void BleCentral::deviceScanError(int cbId,
