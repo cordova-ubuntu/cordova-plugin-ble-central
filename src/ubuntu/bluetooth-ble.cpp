@@ -48,34 +48,34 @@ QString serviceClassesToString(QFlags<QBluetoothDeviceInfo::ServiceClass> sc) {
   QStringList result;
 
   if (sc.testFlag(QBluetoothDeviceInfo::NoService))
-    result << QStringLiteral("NoService");
+    result << QLatin1String("NoService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::PositioningService))
-    result << QStringLiteral("PositioningService");
+    result << QLatin1String("PositioningService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::NetworkingService))
-    result << QStringLiteral("NetworkingService");
+    result << QLatin1String("NetworkingService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::RenderingService))
-    result << QStringLiteral("RenderingService");
+    result << QLatin1String("RenderingService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::CapturingService))
-    result << QStringLiteral("CapturingService");
+    result << QLatin1String("CapturingService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::ObjectTransferService))
-    result << QStringLiteral("ObjectTransferService");
+    result << QLatin1String("ObjectTransferService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::AudioService))
-    result << QStringLiteral("AudioService");
+    result << QLatin1String("AudioService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::TelephonyService))
-    result << QStringLiteral("TelephonyService");
+    result << QLatin1String("TelephonyService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::InformationService))
-    result << QStringLiteral("InformationService");
+    result << QLatin1String("InformationService");
 
   if (sc.testFlag(QBluetoothDeviceInfo::AllServices))
-    result << QStringLiteral("AllServices");
+    result << QLatin1String("AllServices");
 
   return result.join(";");
 }
@@ -83,15 +83,15 @@ QString serviceClassesToString(QFlags<QBluetoothDeviceInfo::ServiceClass> sc) {
 QString serviceErrorToString(QLowEnergyService::ServiceError error) {
   switch(error) {
   case QLowEnergyService::NoError:
-    return QStringLiteral("No Error");
+    return QLatin1String("No Error");
   case QLowEnergyService::OperationError:
-    return QStringLiteral("Operation Error");
+    return QLatin1String("Operation Error");
   case QLowEnergyService::CharacteristicWriteError:
-    return QStringLiteral("Characteristic Write Error");
+    return QLatin1String("Characteristic Write Error");
   case QLowEnergyService::DescriptorWriteError:
-    return QStringLiteral("Descriptor Write Error");
+    return QLatin1String("Descriptor Write Error");
   }
-  return QStringLiteral("Unknown");
+  return QLatin1String("Unknown");
 }
   
 QBluetoothUuid btUuidFromUuidString(const QString& uuid) {
@@ -139,7 +139,7 @@ void BleCentral::deviceScanError(int cbId,
 
 QVariantMap BleCentral::getConnectedDeviceInfos() {
   QVariantMap p;
-  //  p.insert("name", _connectedDevice->remoteName());
+  p.insert("name", _connectedDevice->remoteName());
   p.insert("id", _connectedDevice->remoteAddress().toString());
 
   QVariantList services;
@@ -392,6 +392,7 @@ void BleCentral::connect(int scId, int ecId
 
       auto ctdc = std::make_shared<QMetaObject::Connection>();
       auto dfc = std::make_shared<QMetaObject::Connection>();
+      auto ec = std::make_shared<QMetaObject::Connection>();
 
       *ctdc =
         QObject::connect(_connectedDevice.data(),
@@ -401,10 +402,27 @@ void BleCentral::connect(int scId, int ecId
                            this->_connectedDevice->discoverServices();
                          });
 
+      *ec =
+        QObject::connect(_connectedDevice.data(),
+                         &QLowEnergyController::error,
+                         [=]() {
+                           QObject::disconnect(*ctdc);
+                           QObject::disconnect(*ctdc);
+                           QObject::disconnect(*ec);
+
+			   this->cb(ecId,
+				    QString("Error: %1").arg(
+     			                _connectedDevice->errorString()));
+                         });
+
       *dfc =
         QObject::connect(_connectedDevice.data(),
                          &QLowEnergyController::discoveryFinished,
                          [=]() {
+                           QObject::disconnect(*dfc);
+                           QObject::disconnect(*ctdc);
+                           QObject::disconnect(*ec);
+			   
                            QVariantMap info =
                              getConnectedDeviceInfos();
 
@@ -412,11 +430,11 @@ void BleCentral::connect(int scId, int ecId
                                     QString::fromUtf8(
                                         QJsonDocument::fromVariant(
                                             info).toJson()));
-                           QObject::disconnect(*dfc);
-                           QObject::disconnect(*ctdc);
                          });
 
       _connectedDevice->connectToDevice();
+
+      break;
     }
   }
 }
@@ -448,16 +466,33 @@ void BleCentral::disconnect(int scId, int ecId
                .arg(_connectedDevice->remoteAddress().toString()));
     return;
   }
+
   auto dc = std::make_shared<QMetaObject::Connection>();
-  
+  auto ec = std::make_shared<QMetaObject::Connection>();
+
   *dc =
     QObject::connect(_connectedDevice.data(),
                      &QLowEnergyController::disconnected,
                      [=]() {
                        QObject::disconnect(*dc);
+                       QObject::disconnect(*ec);
+
                        this->_connectedDevice.reset();
+
                        this->cb(scId, "Disconnected");
                      });
+
+  *ec =
+    QObject::connect(_connectedDevice.data(),
+		     &QLowEnergyController::error,
+		     [=]() {
+		       QObject::disconnect(*dc);
+		       QObject::disconnect(*ec);
+
+		       this->cb(ecId,
+				QString("Error: %1").arg(
+				    _connectedDevice->errorString()));
+		     });
 
   _connectedDevice->disconnectFromDevice();
 }
@@ -500,7 +535,8 @@ void BleCentral::read(int scId, int ecId
     _connectedDevice->createServiceObject(btServiceUuid);
   if (!service) {
       // TODO i8n
-    this->cb(ecId, "Could not create low energy service object");
+    this->cb(ecId,
+	     QLatin1String("Could not create low energy service object"));
     return;
   }
 
@@ -510,13 +546,14 @@ void BleCentral::read(int scId, int ecId
   auto continuation = [=]() {
     QLowEnergyCharacteristic characteristic =
       service->characteristic(btCharUuid);
-    
-    qDebug() << " reading "
+
+    qDebug() << "BleCentral::read: "
       << characteristic.uuid()
       << characteristic.value().toBase64();
-    
+
     this->cb(scId,
              QString::fromUtf8(characteristic.value().toBase64()));
+
     delete service;
   };
 
@@ -529,6 +566,10 @@ void BleCentral::read(int scId, int ecId
                        }
                      });
     service->discoverDetails();
+    return;
+  } else if (service->state() != QLowEnergyService::DiscoveredState) {
+    this->cb(ecId,
+	     QLatin1String("Device not connected or closing"));
     return;
   }
   continuation();
@@ -568,6 +609,7 @@ void BleCentral::write(int scId, int ecId
   }
 
   // TODO no simultaneous writes()
+
   QBluetoothUuid btServiceUuid (
       btUuidFromUuidString(serviceUuid));
 
@@ -575,33 +617,38 @@ void BleCentral::write(int scId, int ecId
     _connectedDevice->createServiceObject(btServiceUuid);
   if (!service) {
       // TODO i8n
-    this->cb(ecId, "Could not create low energy service object");
+    this->cb(ecId,
+	     QLatin1String("Could not create low energy service object"));
     return;
   }
 
   auto continuation = [=]() {
     auto cwc = std::make_shared<QMetaObject::Connection>();
     auto sec = std::make_shared<QMetaObject::Connection>();
-    
+
     *cwc =
       QObject::connect(service,
                        &QLowEnergyService::characteristicWritten,
                        [=](const QLowEnergyCharacteristic& c,
                            const QByteArray&) {
-                         this->cb(scId, "CharacteristicWritten");
+                         this->cb(scId, QLatin1String("CharacteristicWritten"));
                          
-                         qDebug() << "CharacteristicWritten" << c.uuid();
+                         qDebug() << "BleCentral::write: CharacteristicWritten"
+			          << c.uuid();
 
-                         if (cwc)
-                           QObject::disconnect(*cwc);
-                         if (sec)
-                           QObject::disconnect(*sec);
+			 QObject::disconnect(*cwc);
+			 QObject::disconnect(*sec);
                        });
 
-    QObject::connect(service,
-                     SIGNAL(error(QLowEnergyService::ServiceError)),
-                     this,
-                     SLOT(bleServiceError(QLowEnergyService::ServiceError)));
+    *sec =
+      QObject::connect(service,
+		       &QLowEnergyService::error(QLowEnergyService::ServiceError),
+		       [=](QLowEnergyService::ServiceError error) {
+			 this->cb(ecId, _connectedDevice->errorString());
+
+			 QObject::disconnect(*cwc);
+			 QObject::disconnect(*sec);
+		       });
 
     QBluetoothUuid btCharUuid(btUuidFromUuidString(characteristicUuid));
 
@@ -609,11 +656,12 @@ void BleCentral::write(int scId, int ecId
         service->characteristic(btCharUuid);
 
     if (!characteristic.properties().testFlag(QLowEnergyCharacteristic::Write)) {
-      this->cb(ecId, "Characteristic not writable");
+      this->cb(ecId, QLatin1String("Characteristic not writable"));
       return;
     }
 
-    qDebug() << "writing:" << QByteArray::fromBase64(binaryData.toUtf8());
+    qDebug() << "BleCentral::write:"
+             << QByteArray::fromBase64(binaryData.toUtf8());
 
     service->writeCharacteristic(characteristic,
                                  QByteArray::fromBase64(binaryData.toUtf8()));
@@ -629,7 +677,12 @@ void BleCentral::write(int scId, int ecId
                      });
     service->discoverDetails();
     return;
+  } else if (service->state() != QLowEnergyService::DiscoveredState) {
+    this->cb(ecId,
+	     QLatin1String("Device not connected or closing"));
+    return;
   }
+
   continuation();
 }
 
@@ -676,22 +729,40 @@ void BleCentral::writeWithoutResponse(int scId, int ecId
     _connectedDevice->createServiceObject(btServiceUuid);
   if (!service) {
       // TODO i8n
-    this->cb(ecId, "Could not create low energy service object");
+    this->cb(ecId,
+	     QLatin1String("Could not create low energy service object"));
     return;
   }
 
-  // TODO continuation
-  service->discoverDetails();
+  auto continuation = [=]() {
+    QBluetoothUuid btCharUuid (
+        btUuidFromUuidString(characteristicUuid));
+    
+    QLowEnergyCharacteristic characteristic =
+        service->characteristic(btCharUuid);
 
-  QBluetoothUuid btCharUuid (
-      btUuidFromUuidString(characteristicUuid));
+    service->writeCharacteristic(characteristic,
+				 QByteArray::fromBase64(binaryData.toUtf8()),
+				 QLowEnergyService::WriteWithoutResponse);
+  }
 
-  QLowEnergyCharacteristic characteristic =
-    service->characteristic(btCharUuid);
+  if (service->state() == QLowEnergyService::DiscoveryRequired) {
+    QObject::connect(service,
+                     &QLowEnergyService::stateChanged,
+                     [=](QLowEnergyService::ServiceState ns) {
+                       if (ns == QLowEnergyService::ServiceDiscovered) {
+                         continuation();
+                       }
+                     });
+    service->discoverDetails();
+    return;
+  } else if (service->state() != QLowEnergyService::DiscoveredState) {
+    this->cb(ecId,
+	     QLatin1String("Device not connected or closing"));
+    return;
+  }
 
-  service->writeCharacteristic(characteristic,
-                               QByteArray::fromBase64(binaryData.toUtf8()),
-                               QLowEnergyService::WriteWithoutResponse);
+  continuation();
 }
 
 /**
@@ -736,8 +807,8 @@ void BleCentral::startNotification(int scId, int ecId
   if (!service) {
     // TODO i8n
     this->cb(ecId,
-             "Could not create low energy service object for service id "
-             + serviceUuid);
+             QStringLiteral("Could not create low energy service object for service id {}")
+  	       .arg(serviceUuid));
     return;
   }
 
@@ -746,8 +817,6 @@ void BleCentral::startNotification(int scId, int ecId
                      &QLowEnergyService::characteristicChanged,
                      [=](const QLowEnergyCharacteristic& c,
                          const QByteArray& data) {
-
-                       qDebug() << "Got update" << characteristicUuid << c.uuid().toUInt16();
 
                        quint16 id = characteristicUuid.toUShort(Q_NULLPTR, 16);
 
