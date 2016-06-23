@@ -196,12 +196,19 @@ void BleCentral::startScanInternal(int scId, int ecId) {
                      [=](const QBluetoothDeviceInfo& di){
                        deviceDiscovered(scId, di);
                      });
-  /*  *ec =
+#if 0
+  void (QBluetoothDeviceDiscoveryAgent::* discoveryErrorMethodPtr)(
+        QBluetoothServiceDiscoveryAgent::Error)
+    = &QBluetoothDeviceDiscoveryAgent::error;
+
+  *ec =
     QObject::connect(_discoveryAgent.data(),
-                     &QBluetoothDeviceDiscoveryAgent::error,
+                     discoveryErrorMethodPtr,
                      [=](QBluetoothDeviceDiscoveryAgent::Error e){
                        deviceScanError(ecId, e);
-                       });*/
+                       });
+#endif
+  
   *fc =
     QObject::connect(_discoveryAgent.data(),
                      &QBluetoothDeviceDiscoveryAgent::finished,
@@ -402,9 +409,11 @@ void BleCentral::connect(int scId, int ecId
                            this->_connectedDevice->discoverServices();
                          });
 
+      void (QLowEnergyController::* serviceErrorMethodPtr)(QLowEnergyController::Error)
+        = &QLowEnergyController::error;
       *ec =
         QObject::connect(_connectedDevice.data(),
-                         &QLowEnergyController::error,
+                         serviceErrorMethodPtr,
                          [=]() {
                            QObject::disconnect(*ctdc);
                            QObject::disconnect(*ctdc);
@@ -482,9 +491,12 @@ void BleCentral::disconnect(int scId, int ecId
                        this->cb(scId, "Disconnected");
                      });
 
+  void (QLowEnergyController::* controllerErrorMethodPtr)(
+        QLowEnergyController::Error)
+    = &QLowEnergyController::error;
   *ec =
     QObject::connect(_connectedDevice.data(),
-		     &QLowEnergyController::error,
+		     controllerErrorMethodPtr,
 		     [=]() {
 		       QObject::disconnect(*dc);
 		       QObject::disconnect(*ec);
@@ -493,7 +505,7 @@ void BleCentral::disconnect(int scId, int ecId
 				QString("Error: %1").arg(
 				    _connectedDevice->errorString()));
 		     });
-
+  
   _connectedDevice->disconnectFromDevice();
 }
 
@@ -567,7 +579,7 @@ void BleCentral::read(int scId, int ecId
                      });
     service->discoverDetails();
     return;
-  } else if (service->state() != QLowEnergyService::DiscoveredState) {
+  } else if (service->state() != QLowEnergyService::ServiceDiscovered) {
     this->cb(ecId,
 	     QLatin1String("Device not connected or closing"));
     return;
@@ -640,9 +652,11 @@ void BleCentral::write(int scId, int ecId
 			 QObject::disconnect(*sec);
                        });
 
+    void (QLowEnergyService::* serviceErrorMethodPtr)(QLowEnergyService::ServiceError)
+      = &QLowEnergyService::error;
     *sec =
       QObject::connect(service,
-		       &QLowEnergyService::error(QLowEnergyService::ServiceError),
+                       serviceErrorMethodPtr,
 		       [=](QLowEnergyService::ServiceError error) {
 			 this->cb(ecId, _connectedDevice->errorString());
 
@@ -677,7 +691,7 @@ void BleCentral::write(int scId, int ecId
                      });
     service->discoverDetails();
     return;
-  } else if (service->state() != QLowEnergyService::DiscoveredState) {
+  } else if (service->state() != QLowEnergyService::ServiceDiscovered) {
     this->cb(ecId,
 	     QLatin1String("Device not connected or closing"));
     return;
@@ -739,12 +753,12 @@ void BleCentral::writeWithoutResponse(int scId, int ecId
         btUuidFromUuidString(characteristicUuid));
     
     QLowEnergyCharacteristic characteristic =
-        service->characteristic(btCharUuid);
+      service->characteristic(btCharUuid);
 
     service->writeCharacteristic(characteristic,
 				 QByteArray::fromBase64(binaryData.toUtf8()),
 				 QLowEnergyService::WriteWithoutResponse);
-  }
+  };
 
   if (service->state() == QLowEnergyService::DiscoveryRequired) {
     QObject::connect(service,
@@ -756,7 +770,7 @@ void BleCentral::writeWithoutResponse(int scId, int ecId
                      });
     service->discoverDetails();
     return;
-  } else if (service->state() != QLowEnergyService::DiscoveredState) {
+  } else if (service->state() != QLowEnergyService::ServiceDiscovered) {
     this->cb(ecId,
 	     QLatin1String("Device not connected or closing"));
     return;
@@ -812,7 +826,7 @@ void BleCentral::startNotification(int scId, int ecId
     return;
   }
 
-  auto continuation = [=, service]() {
+  auto continuation = [=]() {
     QObject::connect(service,
                      &QLowEnergyService::characteristicChanged,
                      [=](const QLowEnergyCharacteristic& c,
